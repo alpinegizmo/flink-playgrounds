@@ -21,7 +21,7 @@ services:
   client:
     build: ../docker/ops-playground-image
     image: apache/flink-ops-playground:2-FLINK-1.9-scala_2.11
-    command: "flink run -d -p 2 /opt/ClickCountJob.jar --bootstrap.servers kafka:9092 --checkpointing --event-time"
+    command: "flink run -d -p 2 /opt/ClickCountJob.jar --bootstrap.servers kafka:9092 --checkpointing --event-time --backpressure"
     depends_on:
       - jobmanager
       - kafka
@@ -56,6 +56,17 @@ services:
       - /tmp/flink-savepoints-directory:/tmp/flink-savepoints-directory
     environment:
       - JOB_MANAGER_RPC_ADDRESS=jobmanager
+  taskmanager2:
+    image: flink:1.9-scala_2.11
+    depends_on:
+      - jobmanager
+    command: "taskmanager.sh start-foreground"
+    volumes:
+      - ./conf:/opt/flink/conf
+      - flink-checkpoint-directory2:/tmp/flink-checkpoint-directory
+      - /tmp/flink-savepoints-directory:/tmp/flink-savepoints-directory
+    environment:
+      - JOB_MANAGER_RPC_ADDRESS=jobmanager
   zookeeper:
     image: wurstmeister/zookeeper:3.4.6
   kafka:
@@ -70,4 +81,5 @@ services:
     ports:
       - 9094:9094
 volumes:
-  flink-checkpoint-directory:
+  flink-checkpoint-directory:  
+  flink-checkpoint-directory2:
